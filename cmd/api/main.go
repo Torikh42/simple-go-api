@@ -14,7 +14,7 @@ func main() {
 	// Handler inline (seperti anonymous function di Express)
 	mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
 		// Di Node: res.send("Hello World")
-		fmt.Fprint(w, "Selamat datang di Go Backend!")
+		fmt.Fprint(w, "Selamat datang di Go Backend!!")
 	})
 
 	mux.HandleFunc("GET /health", handlers.HealthHandler)
