@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"go-api/internal/handlers"
+	"go-api/internal/middleware"
 	"net/http"
 )
 
@@ -25,7 +26,9 @@ func main() {
 
 	// Di Node: app.listen(8080) -> Non-blocking
 	// Di Go: ListenAndServe itu BLOCKING (mengeblok thread utama)
-	err := http.ListenAndServe(":8080", mux)
+	// Bungkus mux dengan middleware Logger
+	handler := middleware.Logger(mux)
+	err := http.ListenAndServe(":8080", handler)
 	if err != nil {
 		fmt.Printf("Gagal menyalakan server: %s\n", err)
 	}
