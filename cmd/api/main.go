@@ -27,6 +27,11 @@ func main() {
 	mux.HandleFunc("GET /products", productHandler.GetProducts)
 	mux.HandleFunc("POST /products", productHandler.CreateProduct)
 
+	// Fitur baru: Menangkap parameter ID dinamis
+	mux.HandleFunc("GET /products/{id}", productHandler.GetProductByID)
+	mux.HandleFunc("PUT /products/{id}", productHandler.UpdateProduct)
+	mux.HandleFunc("DELETE /products/{id}", productHandler.DeleteProduct)
+
 	fmt.Println("Server berjalan di http://localhost:8080")
 
 	handler := middleware.Logger(mux)
