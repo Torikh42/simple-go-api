@@ -5,6 +5,8 @@ import (
 	"go-api/internal/handlers"
 	"go-api/internal/middleware"
 	"go-api/internal/repository"
+	"go-api/internal/routes"
+	"go-api/internal/services"
 	"net/http"
 )
 
@@ -15,22 +17,14 @@ func main() {
 	// Nanti kalau pakai Postgres, tinggal ganti baris ini jadi NewPostgresRepository()
 	productRepo := repository.NewMemoryProductRepository()
 
-	// 2. Inisialisasi Handler (Suntikkan / Inject repository ke dalam handler)
-	productHandler := handlers.NewProductHandler(productRepo)
+	// 2. Inisialisasi Service (Suntikkan Repo ke Service)
+	productService := services.NewProductService(productRepo)
 
-	mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "Selamat datang di Go Backend!")
-	})
-	mux.HandleFunc("GET /health", handlers.HealthHandler)
+	// 3. Inisialisasi Handler (Suntikkan Service ke Handler)
+	productHandler := handlers.NewProductHandler(productService)
 
-	// 3. Gunakan method dari productHandler
-	mux.HandleFunc("GET /products", productHandler.GetProducts)
-	mux.HandleFunc("POST /products", productHandler.CreateProduct)
-
-	// Fitur baru: Menangkap parameter ID dinamis
-	mux.HandleFunc("GET /products/{id}", productHandler.GetProductByID)
-	mux.HandleFunc("PUT /products/{id}", productHandler.UpdateProduct)
-	mux.HandleFunc("DELETE /products/{id}", productHandler.DeleteProduct)
+	// 4. Daftarkan semua routes
+	routes.SetupRoutes(mux, productHandler)
 
 	fmt.Println("Server berjalan di http://localhost:8080")
 
@@ -41,3 +35,4 @@ func main() {
 		fmt.Printf("Gagal menyalakan server: %s\n", err)
 	}
 }
+

@@ -3,28 +3,27 @@ package handlers
 import (
 	"encoding/json"
 	"go-api/internal/models"
-	"go-api/internal/repository"
+	"go-api/internal/services"
 	"net/http"
 	"strconv"
 )
 
-// 1. Buat Struct Handler yang menampung Repository (Dependency Injection)
+// 1. Buat Struct Handler yang menampung Service (Bukan Repo lagi!)
 type ProductHandler struct {
-	repo repository.ProductRepository
+	service services.ProductService
 }
 
 // 2. Constructor untuk Handler
-func NewProductHandler(repo repository.ProductRepository) *ProductHandler {
+func NewProductHandler(service services.ProductService) *ProductHandler {
 	return &ProductHandler{
-		repo: repo,
+		service: service,
 	}
 }
 
 // 3. Ubah fungsi biasa menjadi "Method" dari struct ProductHandler
-// Perhatikan tambahan `(h *ProductHandler)` sebelum nama fungsi
 func (h *ProductHandler) GetProducts(w http.ResponseWriter, r *http.Request) {
-	// Panggil logika dari database/repository
-	products, _ := h.repo.GetAll()
+	// Panggil dari Service
+	products, _ := h.service.GetAll()
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(products)
@@ -38,9 +37,12 @@ func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Panggil fungsi simpan ke database/repository
-	// Kita passing pointer (&newProduct) agar ID-nya otomatis terisi oleh Repo
-	h.repo.Create(&newProduct)
+	// Panggil layer Service yang akan memvalidasi logika bisnis sebelum ke DB
+	if err := h.service.Create(&newProduct); err != nil {
+		// Menangkap error jika harga minus atau nama kosong
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
@@ -49,17 +51,15 @@ func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 
 // Menangani GET /products/{id}
 func (h *ProductHandler) GetProductByID(w http.ResponseWriter, r *http.Request) {
-	// Menangkap param {id} dari URL menggunakan fitur baru Go 1.22
 	idString := r.PathValue("id")
 	
-	// URL params selalu berbentuk string, kita ubah jadi integer (angka)
 	id, err := strconv.Atoi(idString)
 	if err != nil {
 		http.Error(w, "ID harus berupa angka", http.StatusBadRequest)
 		return
 	}
 
-	product, err := h.repo.GetByID(id)
+	product, err := h.service.GetByID(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
@@ -84,11 +84,10 @@ func (h *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	// Pastikan ID di model sama dengan ID dari URL
 	updatedProduct.ID = id
 
-	if err := h.repo.Update(&updatedProduct); err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+	if err := h.service.Update(&updatedProduct); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -105,11 +104,10 @@ func (h *ProductHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.repo.Delete(id); err != nil {
+	if err := h.service.Delete(id); err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
-	// Mengembalikan 204 No Content untuk operasi Delete yang berhasil
 	w.WriteHeader(http.StatusNoContent)
 }
