@@ -1,0 +1,21 @@
+version: "3.8"
+
+services:
+  postgres:
+    container_name: simple-go-api
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: go_api_db
+    ports:
+      - "5434:5432"
+    volumes:
+      # Data tetap tersimpan meskipun container dihapus
+      - pgdata:/var/lib/postgresql/data
+      # Jalankan migration otomatis saat container pertama kali dibuat
+      - ./migrations:/docker-entrypoint-initdb.d
+
+volumes:
+  pgdata:

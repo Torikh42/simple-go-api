@@ -18,6 +18,8 @@ go.work.sum
 # Air live reload tmp folder (sangat penting karena air membuat folder tmp/)
 tmp/
 
+.env
+
 # IDE / Editor
 .idea/
 .vscode/

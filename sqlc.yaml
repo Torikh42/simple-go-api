@@ -1,0 +1,12 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "db/queries/"       # Tempat Anda menulis file SQL query
+    schema: "db/schema/"         # Tempat Anda menulis file SQL schema (tabel)
+    gen:
+      go:
+        package: "db"
+        out: "internal/db"       # Folder output kode Go yang di-generate
+        emit_json_tags: true     # Otomatis tambahkan json struct tags
+        emit_interface: true     # Generate interface agar mudah di-mock saat testing
+        sql_package: "pgx/v5"    # Gunakan pgx/v5 bukan standard database/sql
