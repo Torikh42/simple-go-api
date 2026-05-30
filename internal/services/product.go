@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"errors"
 	"go-api/internal/models"
 	"go-api/internal/repository"
@@ -8,11 +9,11 @@ import (
 
 // 1. Kontrak (Interface) untuk Service
 type ProductService interface {
-	GetAll() ([]models.Product, error)
-	GetByID(id int) (*models.Product, error)
-	Create(product *models.Product) error
-	Update(product *models.Product) error
-	Delete(id int) error
+	GetAll(ctx context.Context) ([]models.Product, error)
+	GetByID(ctx context.Context, id int) (*models.Product, error)
+	Create(ctx context.Context, product *models.Product) error
+	Update(ctx context.Context, product *models.Product) error
+	Delete(ctx context.Context, id int) error
 }
 
 // 2. Struct yang menampung Repository
@@ -28,18 +29,18 @@ func NewProductService(repo repository.ProductRepository) ProductService {
 }
 
 // 4. Implementasi Logika Bisnis
-func (s *productService) GetAll() ([]models.Product, error) {
-	return s.repo.GetAll() // Langsung passing saja ke repo kalau tidak ada logika tambahan
+func (s *productService) GetAll(ctx context.Context) ([]models.Product, error) {
+	return s.repo.GetAll(ctx) // Langsung passing saja ke repo kalau tidak ada logika tambahan
 }
 
-func (s *productService) GetByID(id int) (*models.Product, error) {
+func (s *productService) GetByID(ctx context.Context, id int) (*models.Product, error) {
 	if id <= 0 {
 		return nil, errors.New("id tidak valid")
 	}
-	return s.repo.GetByID(id)
+	return s.repo.GetByID(ctx, id)
 }
 
-func (s *productService) Create(product *models.Product) error {
+func (s *productService) Create(ctx context.Context, product *models.Product) error {
 	// Ini contoh Logika Bisnis (Business Rule):
 	if product.Price < 0 {
 		return errors.New("harga tidak boleh negatif")
@@ -51,10 +52,10 @@ func (s *productService) Create(product *models.Product) error {
 		return errors.New("nama produk wajib diisi")
 	}
 
-	return s.repo.Create(product)
+	return s.repo.Create(ctx, product)
 }
 
-func (s *productService) Update(product *models.Product) error {
+func (s *productService) Update(ctx context.Context, product *models.Product) error {
 	// Logika bisnis yang sama berlaku untuk update
 	if product.Price < 0 {
 		return errors.New("harga tidak boleh negatif")
@@ -66,9 +67,9 @@ func (s *productService) Update(product *models.Product) error {
 		return errors.New("nama produk wajib diisi")
 	}
 
-	return s.repo.Update(product)
+	return s.repo.Update(ctx, product)
 }
 
-func (s *productService) Delete(id int) error {
-	return s.repo.Delete(id)
+func (s *productService) Delete(ctx context.Context, id int) error {
+	return s.repo.Delete(ctx, id)
 }

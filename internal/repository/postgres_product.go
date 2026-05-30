@@ -23,8 +23,8 @@ func NewPostgresProductRepository(dbPool *pgxpool.Pool) ProductRepository {
 }
 
 // GetAll mengambil semua produk dari database
-func (r *postgresProductRepo) GetAll() ([]models.Product, error) {
-	dbProducts, err := r.queries.GetAllProducts(context.Background())
+func (r *postgresProductRepo) GetAll(ctx context.Context) ([]models.Product, error) {
+	dbProducts, err := r.queries.GetAllProducts(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -43,8 +43,8 @@ func (r *postgresProductRepo) GetAll() ([]models.Product, error) {
 }
 
 // GetByID mengambil satu produk berdasarkan ID
-func (r *postgresProductRepo) GetByID(id int) (*models.Product, error) {
-	p, err := r.queries.GetProductByID(context.Background(), int32(id))
+func (r *postgresProductRepo) GetByID(ctx context.Context, id int) (*models.Product, error) {
+	p, err := r.queries.GetProductByID(ctx, int32(id))
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, errors.New("produk tidak ditemukan")
@@ -61,8 +61,8 @@ func (r *postgresProductRepo) GetByID(id int) (*models.Product, error) {
 }
 
 // Create menyimpan produk baru ke database
-func (r *postgresProductRepo) Create(product *models.Product) error {
-	p, err := r.queries.CreateProduct(context.Background(), db.CreateProductParams{
+func (r *postgresProductRepo) Create(ctx context.Context, product *models.Product) error {
+	p, err := r.queries.CreateProduct(ctx, db.CreateProductParams{
 		Name:  product.Name,
 		Price: product.Price,
 		Stock: int32(product.Stock),
@@ -77,8 +77,8 @@ func (r *postgresProductRepo) Create(product *models.Product) error {
 }
 
 // Update mengubah data produk yang sudah ada
-func (r *postgresProductRepo) Update(product *models.Product) error {
-	_, err := r.queries.UpdateProduct(context.Background(), db.UpdateProductParams{
+func (r *postgresProductRepo) Update(ctx context.Context, product *models.Product) error {
+	_, err := r.queries.UpdateProduct(ctx, db.UpdateProductParams{
 		ID:    int32(product.ID),
 		Name:  product.Name,
 		Price: product.Price,
@@ -95,7 +95,7 @@ func (r *postgresProductRepo) Update(product *models.Product) error {
 }
 
 // Delete menghapus produk berdasarkan ID
-func (r *postgresProductRepo) Delete(id int) error {
-	err := r.queries.DeleteProduct(context.Background(), int32(id))
+func (r *postgresProductRepo) Delete(ctx context.Context, id int) error {
+	err := r.queries.DeleteProduct(ctx, int32(id))
 	return err
 }

@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"errors"
 	"go-api/internal/models"
 )
@@ -8,11 +9,11 @@ import (
 // 1. Interface: Kontrak yang harus dipenuhi oleh database apa pun
 // Nanti jika kita ganti ke PostgreSQL, kodenya tetap sama!
 type ProductRepository interface {
-	GetAll() ([]models.Product, error)
-	GetByID(id int) (*models.Product, error)
-	Create(product *models.Product) error
-	Update(product *models.Product) error
-	Delete(id int) error
+	GetAll(ctx context.Context) ([]models.Product, error)
+	GetByID(ctx context.Context, id int) (*models.Product, error)
+	Create(ctx context.Context, product *models.Product) error
+	Update(ctx context.Context, product *models.Product) error
+	Delete(ctx context.Context, id int) error
 }
 
 // 2. Struct Penyimpanan (In-Memory)
@@ -31,12 +32,12 @@ func NewMemoryProductRepository() ProductRepository {
 }
 
 // 4. Implementasi Method GetAll
-func (r *memoryProductRepo) GetAll() ([]models.Product, error) {
+func (r *memoryProductRepo) GetAll(ctx context.Context) ([]models.Product, error) {
 	return r.data, nil
 }
 
 // Implementasi Method GetByID
-func (r *memoryProductRepo) GetByID(id int) (*models.Product, error) {
+func (r *memoryProductRepo) GetByID(ctx context.Context, id int) (*models.Product, error) {
 	for _, p := range r.data {
 		if p.ID == id {
 			return &p, nil
@@ -46,14 +47,14 @@ func (r *memoryProductRepo) GetByID(id int) (*models.Product, error) {
 }
 
 // 5. Implementasi Method Create
-func (r *memoryProductRepo) Create(p *models.Product) error {
+func (r *memoryProductRepo) Create(ctx context.Context, p *models.Product) error {
 	p.ID = len(r.data) + 1
 	r.data = append(r.data, *p)
 	return nil
 }
 
 // Implementasi Method Update
-func (r *memoryProductRepo) Update(p *models.Product) error {
+func (r *memoryProductRepo) Update(ctx context.Context, p *models.Product) error {
 	for i, existing := range r.data {
 		if existing.ID == p.ID {
 			r.data[i] = *p
@@ -64,7 +65,7 @@ func (r *memoryProductRepo) Update(p *models.Product) error {
 }
 
 // Implementasi Method Delete
-func (r *memoryProductRepo) Delete(id int) error {
+func (r *memoryProductRepo) Delete(ctx context.Context, id int) error {
 	for i, p := range r.data {
 		if p.ID == id {
 			// Menghapus elemen dari slice (array)
