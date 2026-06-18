@@ -1,6 +1,5 @@
 package models
 
-// Product mewakili data produk di toko kita
 type Product struct {
 	ID    int    `json:"id"`
 	Name  string `json:"name"`

@@ -6,8 +6,6 @@ import (
 	"go-api/internal/models"
 )
 
-// 1. Interface: Kontrak yang harus dipenuhi oleh database apa pun
-// Nanti jika kita ganti ke PostgreSQL, kodenya tetap sama!
 type ProductRepository interface {
 	GetAll(ctx context.Context) ([]models.Product, error)
 	GetByID(ctx context.Context, id int) (*models.Product, error)
@@ -16,12 +14,10 @@ type ProductRepository interface {
 	Delete(ctx context.Context, id int) error
 }
 
-// 2. Struct Penyimpanan (In-Memory)
 type memoryProductRepo struct {
 	data []models.Product
 }
 
-// 3. Constructor (Fungsi Pembuat)
 func NewMemoryProductRepository() ProductRepository {
 	return &memoryProductRepo{
 		data: []models.Product{
@@ -31,12 +27,10 @@ func NewMemoryProductRepository() ProductRepository {
 	}
 }
 
-// 4. Implementasi Method GetAll
 func (r *memoryProductRepo) GetAll(ctx context.Context) ([]models.Product, error) {
 	return r.data, nil
 }
 
-// Implementasi Method GetByID
 func (r *memoryProductRepo) GetByID(ctx context.Context, id int) (*models.Product, error) {
 	for _, p := range r.data {
 		if p.ID == id {
@@ -46,14 +40,12 @@ func (r *memoryProductRepo) GetByID(ctx context.Context, id int) (*models.Produc
 	return nil, errors.New("produk tidak ditemukan")
 }
 
-// 5. Implementasi Method Create
 func (r *memoryProductRepo) Create(ctx context.Context, p *models.Product) error {
 	p.ID = len(r.data) + 1
 	r.data = append(r.data, *p)
 	return nil
 }
 
-// Implementasi Method Update
 func (r *memoryProductRepo) Update(ctx context.Context, p *models.Product) error {
 	for i, existing := range r.data {
 		if existing.ID == p.ID {
@@ -64,11 +56,9 @@ func (r *memoryProductRepo) Update(ctx context.Context, p *models.Product) error
 	return errors.New("produk tidak ditemukan")
 }
 
-// Implementasi Method Delete
 func (r *memoryProductRepo) Delete(ctx context.Context, id int) error {
 	for i, p := range r.data {
 		if p.ID == id {
-			// Menghapus elemen dari slice (array)
 			r.data = append(r.data[:i], r.data[i+1:]...)
 			return nil
 		}
