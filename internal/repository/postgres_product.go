@@ -15,14 +15,12 @@ type postgresProductRepo struct {
 	queries *db.Queries
 }
 
-// NewPostgresProductRepository membuat instance baru yang terkoneksi dengan database
 func NewPostgresProductRepository(dbPool *pgxpool.Pool) ProductRepository {
 	return &postgresProductRepo{
 		queries: db.New(dbPool),
 	}
 }
 
-// GetAll mengambil semua produk dari database
 func (r *postgresProductRepo) GetAll(ctx context.Context) ([]models.Product, error) {
 	dbProducts, err := r.queries.GetAllProducts(ctx)
 	if err != nil {
@@ -42,7 +40,6 @@ func (r *postgresProductRepo) GetAll(ctx context.Context) ([]models.Product, err
 	return products, nil
 }
 
-// GetByID mengambil satu produk berdasarkan ID
 func (r *postgresProductRepo) GetByID(ctx context.Context, id int) (*models.Product, error) {
 	p, err := r.queries.GetProductByID(ctx, int32(id))
 	if err != nil {
@@ -60,7 +57,6 @@ func (r *postgresProductRepo) GetByID(ctx context.Context, id int) (*models.Prod
 	}, nil
 }
 
-// Create menyimpan produk baru ke database
 func (r *postgresProductRepo) Create(ctx context.Context, product *models.Product) error {
 	p, err := r.queries.CreateProduct(ctx, db.CreateProductParams{
 		Name:  product.Name,
@@ -71,12 +67,10 @@ func (r *postgresProductRepo) Create(ctx context.Context, product *models.Produc
 		return err
 	}
 
-	// Update ID produk dengan ID yang baru di-generate oleh database
 	product.ID = int(p.ID)
 	return nil
 }
 
-// Update mengubah data produk yang sudah ada
 func (r *postgresProductRepo) Update(ctx context.Context, product *models.Product) error {
 	_, err := r.queries.UpdateProduct(ctx, db.UpdateProductParams{
 		ID:    int32(product.ID),
@@ -94,7 +88,6 @@ func (r *postgresProductRepo) Update(ctx context.Context, product *models.Produc
 	return nil
 }
 
-// Delete menghapus produk berdasarkan ID
 func (r *postgresProductRepo) Delete(ctx context.Context, id int) error {
 	err := r.queries.DeleteProduct(ctx, int32(id))
 	return err

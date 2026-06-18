@@ -7,7 +7,6 @@ import (
 	"go-api/internal/repository"
 )
 
-// 1. Kontrak (Interface) untuk Service
 type ProductService interface {
 	GetAll(ctx context.Context) ([]models.Product, error)
 	GetByID(ctx context.Context, id int) (*models.Product, error)
@@ -16,21 +15,18 @@ type ProductService interface {
 	Delete(ctx context.Context, id int) error
 }
 
-// 2. Struct yang menampung Repository
 type productService struct {
 	repo repository.ProductRepository
 }
 
-// 3. Constructor
 func NewProductService(repo repository.ProductRepository) ProductService {
 	return &productService{
 		repo: repo,
 	}
 }
 
-// 4. Implementasi Logika Bisnis
 func (s *productService) GetAll(ctx context.Context) ([]models.Product, error) {
-	return s.repo.GetAll(ctx) // Langsung passing saja ke repo kalau tidak ada logika tambahan
+	return s.repo.GetAll(ctx)
 }
 
 func (s *productService) GetByID(ctx context.Context, id int) (*models.Product, error) {
@@ -41,7 +37,6 @@ func (s *productService) GetByID(ctx context.Context, id int) (*models.Product, 
 }
 
 func (s *productService) Create(ctx context.Context, product *models.Product) error {
-	// Ini contoh Logika Bisnis (Business Rule):
 	if product.Price < 0 {
 		return errors.New("harga tidak boleh negatif")
 	}
@@ -56,7 +51,6 @@ func (s *productService) Create(ctx context.Context, product *models.Product) er
 }
 
 func (s *productService) Update(ctx context.Context, product *models.Product) error {
-	// Logika bisnis yang sama berlaku untuk update
 	if product.Price < 0 {
 		return errors.New("harga tidak boleh negatif")
 	}
