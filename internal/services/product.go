@@ -37,30 +37,10 @@ func (s *productService) GetByID(ctx context.Context, id int) (*models.Product, 
 }
 
 func (s *productService) Create(ctx context.Context, product *models.Product) error {
-	if product.Price < 0 {
-		return errors.New("harga tidak boleh negatif")
-	}
-	if product.Stock < 0 {
-		return errors.New("stok tidak boleh negatif")
-	}
-	if product.Name == "" {
-		return errors.New("nama produk wajib diisi")
-	}
-
 	return s.repo.Create(ctx, product)
 }
 
 func (s *productService) Update(ctx context.Context, product *models.Product) error {
-	if product.Price < 0 {
-		return errors.New("harga tidak boleh negatif")
-	}
-	if product.Stock < 0 {
-		return errors.New("stok tidak boleh negatif")
-	}
-	if product.Name == "" {
-		return errors.New("nama produk wajib diisi")
-	}
-
 	return s.repo.Update(ctx, product)
 }
 

@@ -6,7 +6,11 @@ import (
 	"go-api/internal/services"
 	"net/http"
 	"strconv"
+
+	"github.com/go-playground/validator/v10"
 )
+
+var validate = validator.New()
 
 type ProductHandler struct {
 	service services.ProductService
@@ -32,6 +36,11 @@ func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 
 	if err := json.NewDecoder(r.Body).Decode(&newProduct); err != nil {
 		http.Error(w, "Data tidak valid", http.StatusBadRequest)
+		return
+	}
+
+	if err := validate.Struct(newProduct); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -78,6 +87,11 @@ func (h *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
+	if err := validate.Struct(updatedProduct); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	ctx := r.Context()
 	updatedProduct.ID = id
 
