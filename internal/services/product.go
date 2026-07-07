@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"go-api/internal/models"
 	"go-api/internal/repository"
+	"sync"
 	"time"
 )
 
@@ -39,16 +40,25 @@ func (s *productService) GetByID(ctx context.Context, id int) (*models.Product, 
 }
 
 func (s *productService) Create(ctx context.Context, product *models.Product) error {
-	statusChan := make(chan string)
+	admins := []string{"budi@admin.com", "siti@admin.com", "joko@admin.com"}
+	go func() {
+		var wg sync.WaitGroup
 
-	go SendEmailNotification(product.Name, statusChan)
+		for _, admin := range admins {
+			wg.Add(1)
 
-	go func(){
-	pesanDariAsisten := <-statusChan
-	fmt.Println("Koki Utama mendengar:", pesanDariAsisten)
+			go func(adminEmail string) {
+				defer wg.Done()
+
+				fmt.Printf("Mulai mengirim email ke %s...\n", adminEmail)
+				time.Sleep(2 * time.Second)
+				fmt.Printf("✅ Terkirim ke %s!\n", adminEmail)
+			}(admin) 
+		}
+
+		wg.Wait()
+		fmt.Println("seluruh email notifikasi berhasil dikirim!")
 	}()
-
-	
 
 	return s.repo.Create(ctx, product)
 }
