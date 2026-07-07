@@ -3,8 +3,10 @@ package services
 import (
 	"context"
 	"errors"
+	"fmt"
 	"go-api/internal/models"
 	"go-api/internal/repository"
+	"time"
 )
 
 type ProductService interface {
@@ -37,8 +39,20 @@ func (s *productService) GetByID(ctx context.Context, id int) (*models.Product, 
 }
 
 func (s *productService) Create(ctx context.Context, product *models.Product) error {
+	statusChan := make(chan string)
+
+	go SendEmailNotification(product.Name, statusChan)
+
+	go func(){
+	pesanDariAsisten := <-statusChan
+	fmt.Println("Koki Utama mendengar:", pesanDariAsisten)
+	}()
+
+	
+
 	return s.repo.Create(ctx, product)
 }
+
 
 func (s *productService) Update(ctx context.Context, product *models.Product) error {
 	return s.repo.Update(ctx, product)
@@ -47,3 +61,12 @@ func (s *productService) Update(ctx context.Context, product *models.Product) er
 func (s *productService) Delete(ctx context.Context, id int) error {
 	return s.repo.Delete(ctx, id)
 }
+
+func SendEmailNotification(productName string, statusChan chan string) {
+	fmt.Printf("Mulai mengirim email untuk produk: %s...\n", productName)
+	
+	time.Sleep(3 * time.Second) 
+	
+	statusChan <- fmt.Sprintf("Email sukses terkirim untuk produk: %s!", productName)
+}
+
