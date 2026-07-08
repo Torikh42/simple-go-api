@@ -1,0 +1,12 @@
+.git
+.gitignore
+.env
+.air.toml
+tmp/
+bin/
+Makefile
+Taskfile.yml
+request.http
+AGENTS.md
+CURRICULUM.md
+README.md
