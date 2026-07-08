@@ -1,4 +1,6 @@
-FROM golang:1.22-alpine AS builder
+# TAHAP 1: Builder
+# Menggunakan Golang versi Alpine (Sangat Ringan)
+FROM golang:1.26-alpine AS builder
 
 WORKDIR /app
 
