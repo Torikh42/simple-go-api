@@ -41,7 +41,7 @@ jobs:
   docker-build:
     name: Build Docker Image
     runs-on: ubuntu-latest
-    needs: test-and-lint # Baru jalan kalau test dan lint hijau
+    needs: test-and-lint
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -53,5 +53,5 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          push: false # Ubah jadi true jika Anda ingin mem-push ke DockerHub atau GHCR
+          push: false
           tags: simple-go-api:latest
