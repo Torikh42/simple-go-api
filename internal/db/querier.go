@@ -6,13 +6,19 @@ package db
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
 	CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error)
+	CreateSession(ctx context.Context, arg CreateSessionParams) (Session, error)
+	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteProduct(ctx context.Context, id int32) error
 	GetAllProducts(ctx context.Context) ([]Product, error)
 	GetProductByID(ctx context.Context, id int32) (Product, error)
+	GetSession(ctx context.Context, id pgtype.UUID) (Session, error)
+	GetUserByEmail(ctx context.Context, email string) (User, error)
 	UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error)
 }
 

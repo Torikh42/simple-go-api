@@ -4,9 +4,29 @@
 
 package db
 
+import (
+	"github.com/jackc/pgx/v5/pgtype"
+)
+
 type Product struct {
 	ID    int32  `json:"id"`
 	Name  string `json:"name"`
 	Price int64  `json:"price"`
 	Stock int32  `json:"stock"`
+}
+
+type Session struct {
+	ID           pgtype.UUID      `json:"id"`
+	UserID       int32            `json:"user_id"`
+	RefreshToken string           `json:"refresh_token"`
+	ExpiresAt    pgtype.Timestamp `json:"expires_at"`
+	CreatedAt    pgtype.Timestamp `json:"created_at"`
+}
+
+type User struct {
+	ID           int32            `json:"id"`
+	Username     string           `json:"username"`
+	Email        string           `json:"email"`
+	PasswordHash string           `json:"password_hash"`
+	CreatedAt    pgtype.Timestamp `json:"created_at"`
 }
