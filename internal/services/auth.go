@@ -40,7 +40,7 @@ func (s *authService) Register(ctx context.Context, username, email, password st
 	}
 	user, err := s.repo.CreateUser(ctx, arg)
 	if err != nil {
-		return db.User{}, err 
+		return db.User{}, err
 	}
 	return user, nil
 }
@@ -48,7 +48,7 @@ func (s *authService) Register(ctx context.Context, username, email, password st
 func (s *authService) Login(ctx context.Context, email, password string) (string, string, error) {
 	user, err := s.repo.GetUserByEmail(ctx, email)
 	if err != nil {
-		return "", "", errors.New("email atau password salah") 
+		return "", "", errors.New("email atau password salah")
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
@@ -60,7 +60,7 @@ func (s *authService) Login(ctx context.Context, email, password string) (string
 		"user_id": user.ID,
 		"exp":     time.Now().Add(1 * time.Hour).Unix(),
 	})
-	
+
 	accessToken, err := token.SignedString([]byte("RAHASIA_NEGARA"))
 	if err != nil {
 		return "", "", errors.New("gagal membuat access token")
@@ -75,7 +75,7 @@ func (s *authService) Login(ctx context.Context, email, password string) (string
 		ID:           pgSessionID,
 		UserID:       user.ID,
 		RefreshToken: refreshToken,
-		ExpiresAt:    pgtype.Timestamp{Time: time.Now().Add(7 * 24 * time.Hour), Valid: true}, 
+		ExpiresAt:    pgtype.Timestamp{Time: time.Now().Add(7 * 24 * time.Hour), Valid: true},
 	})
 	if err != nil {
 		return "", "", errors.New("gagal menyimpan sesi")
@@ -83,4 +83,3 @@ func (s *authService) Login(ctx context.Context, email, password string) (string
 
 	return accessToken, refreshToken, nil
 }
-

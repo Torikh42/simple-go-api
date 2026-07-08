@@ -53,7 +53,7 @@ func (s *productService) Create(ctx context.Context, product *models.Product) er
 				fmt.Printf("Mulai mengirim email ke %s...\n", adminEmail)
 				time.Sleep(2 * time.Second)
 				fmt.Printf("✅ Terkirim ke %s!\n", adminEmail)
-			}(admin) 
+			}(admin)
 		}
 
 		wg.Wait()
@@ -62,7 +62,6 @@ func (s *productService) Create(ctx context.Context, product *models.Product) er
 
 	return s.repo.Create(ctx, product)
 }
-
 
 func (s *productService) Update(ctx context.Context, product *models.Product) error {
 	return s.repo.Update(ctx, product)
@@ -74,9 +73,8 @@ func (s *productService) Delete(ctx context.Context, id int) error {
 
 func SendEmailNotification(productName string, statusChan chan string) {
 	fmt.Printf("Mulai mengirim email untuk produk: %s...\n", productName)
-	
-	time.Sleep(3 * time.Second) 
-	
+
+	time.Sleep(3 * time.Second)
+
 	statusChan <- fmt.Sprintf("Email sukses terkirim untuk produk: %s!", productName)
 }
-

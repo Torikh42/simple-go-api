@@ -2,8 +2,8 @@ package repository
 
 import (
 	"context"
-	"go-api/internal/db"
 	"github.com/jackc/pgx/v5/pgtype"
+	"go-api/internal/db"
 )
 
 type UserRepository interface {

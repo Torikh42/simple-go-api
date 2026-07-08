@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"os"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"go-api/internal/db"
@@ -13,6 +11,8 @@ import (
 	"go-api/internal/repository"
 	"go-api/internal/routes"
 	"go-api/internal/services"
+	"net/http"
+	"os"
 )
 
 func main() {

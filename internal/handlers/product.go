@@ -61,7 +61,7 @@ func (h *ProductHandler) GetProductByID(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "ID harus berupa angka", http.StatusBadRequest)
 		return
 	}
-	
+
 	ctx := r.Context()
 	product, err := h.service.GetByID(ctx, id)
 	if err != nil {
@@ -86,7 +86,7 @@ func (h *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Data tidak valid", http.StatusBadRequest)
 		return
 	}
-	
+
 	if err := validate.Struct(updatedProduct); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -111,7 +111,7 @@ func (h *ProductHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "ID harus berupa angka", http.StatusBadRequest)
 		return
 	}
-	
+
 	ctx := r.Context()
 	if err := h.service.Delete(ctx, id); err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)

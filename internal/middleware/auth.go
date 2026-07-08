@@ -9,6 +9,7 @@ import (
 )
 
 type contextKey string
+
 const UserIDKey contextKey = "user_id"
 
 func Auth(next http.HandlerFunc) http.HandlerFunc {
@@ -26,7 +27,7 @@ func Auth(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		tokenStr := parts[1]
-		
+
 		token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
 			return []byte("RAHASIA_NEGARA"), nil
 		})
