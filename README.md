@@ -8,6 +8,7 @@ A simple RESTful API for product management built with Go, following clean archi
 - **Database**: PostgreSQL (via Docker)
 - **Driver**: [pgx/v5](https://github.com/jackc/pgx)
 - **Query Generator**: [sqlc](https://sqlc.dev)
+- **Auth**: [golang-jwt](https://github.com/golang-jwt/jwt) & bcrypt
 - **Hot Reload**: [air](https://github.com/air-verse/air)
 
 ## Architecture
@@ -91,11 +92,13 @@ The server will be available at `http://localhost:8080`.
 | Method | Endpoint           | Description          |
 |--------|--------------------|----------------------|
 | GET    | `/health`          | Health check         |
-| GET    | `/products`        | Get all products     |
-| POST   | `/products`        | Create a product     |
-| GET    | `/products/{id}`   | Get product by ID    |
-| PUT    | `/products/{id}`   | Update a product     |
-| DELETE | `/products/{id}`   | Delete a product     |
+| POST   | `/register`        | Register user baru   |
+| POST   | `/login`           | Login & dapat JWT    |
+| GET    | `/products`        | Get all products (🔒)|
+| POST   | `/products`        | Create a product (🔒)|
+| GET    | `/products/{id}`   | Get product by ID(🔒)|
+| PUT    | `/products/{id}`   | Update a product (🔒)|
+| DELETE | `/products/{id}`   | Delete a product (🔒)|
 
 ### Example Request
 

@@ -7,6 +7,7 @@ import (
 	"os"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
+	"go-api/internal/db"
 	"go-api/internal/handlers"
 	"go-api/internal/middleware"
 	"go-api/internal/repository"
@@ -45,8 +46,14 @@ func main() {
 	productService := services.NewProductService(productRepo)
 	productHandler := handlers.NewProductHandler(productService)
 
+	// DI Auth
+	queries := db.New(dbPool)
+	userRepo := repository.NewPostgresUserRepository(queries)
+	authService := services.NewAuthService(userRepo)
+	authHandler := handlers.NewAuthHandler(authService)
+
 	mux := http.NewServeMux()
-	routes.SetupRoutes(mux, productHandler)
+	routes.SetupRoutes(mux, productHandler, authHandler)
 
 	port := os.Getenv("APP_PORT")
 	if port == "" {

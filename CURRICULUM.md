@@ -46,3 +46,9 @@ Ini adalah pengganti mutlak dari `async/await` dan *Event Loop* Node.js.
 - Menggunakan *Interface* untuk *Dependency Injection*.
 - Mengapa kita tidak butuh *framework* DI di Go (cukup mem-passing dependencies melalui konstruktor/fungsi pembuat).
 - Menulis Unit Test (`go test`) tanpa framework tambahan.
+
+## Modul 8: Keamanan & Autentikasi (JWT & Bcrypt)
+- Mengamankan password pengguna dengan algoritma lambat (Bcrypt).
+- Mengelola *Access Token* (Stateless, cepat, berumur pendek) dengan `golang-jwt`.
+- Mengelola *Refresh Token* (Stateful di database, bisa di-revoke, berumur panjang).
+- Mengamankan *endpoint* API menggunakan Middleware untuk validasi JWT Bearer token.

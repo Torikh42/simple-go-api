@@ -1,0 +1,45 @@
+### 1. Register User Baru
+POST http://localhost:8080/register
+Content-Type: application/json
+
+{
+    "username": "tester",
+    "email": "tester@example.com",
+    "password": "password123"
+}
+
+### 2. Login User
+# Setelah login, copy "access_token" dari response untuk dipakai di bawah
+POST http://localhost:8080/login
+Content-Type: application/json
+
+{
+    "email": "tester@example.com",
+    "password": "password123"
+}
+
+### ========================================================
+### BAGIAN PROTECTED ENDPOINTS (Butuh Token)
+### ========================================================
+
+### 3. Get Products (Akan gagal 401 jika tanpa token)
+GET http://localhost:8080/products
+
+
+### 4. Get Products (Berhasil)
+# Ganti <TARUH_ACCESS_TOKEN_DISINI> dengan token asli dari Login
+GET http://localhost:8080/products
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODM0ODczODQsInVzZXJfaWQiOjF9.gADOTsRm9VWAiSK5PdVLRBT4WWQIF5c_s_D6u50V7Io
+
+
+### 5. Create Product (Berhasil)
+POST http://localhost:8080/products
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODM0ODczODQsInVzZXJfaWQiOjF9.gADOTsRm9VWAiSK5PdVLRBT4WWQIF5c_s_D6u50V7Io
+
+{
+    "name": "Baju Baru",
+    "price": 100000,
+    "stock": 50,
+    "category": "Pakaian"
+}
