@@ -22,8 +22,11 @@ jobs:
 
       - name: Check Formatting
         run: |
-          if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then
-            echo "Ada file yang belum diformat. Jalankan 'gofmt -w .' atau 'task format' terlebih dahulu!"
+          UNFORMATTED=$(gofmt -s -l .)
+          if [ -n "$UNFORMATTED" ]; then
+            echo "File berikut belum diformat:"
+            echo "$UNFORMATTED"
+            echo "Jalankan 'gofmt -w .' atau 'task format' terlebih dahulu!"
             exit 1
           fi
 

@@ -1,0 +1,22 @@
+version: '3'
+
+tasks:
+  format:
+    desc: Format seluruh kode Go (Sama seperti oxfmt)
+    cmds:
+      - gofmt -w .
+
+  dev:
+    desc: Jalankan aplikasi dengan hot-reload
+    cmds:
+      - air
+
+  db-start:
+    desc: Jalankan database PostgreSQL di Docker
+    cmds:
+      - docker compose up -d
+
+  init-hooks:
+    desc: Hubungkan pre-commit hook (Lefthook) agar otomatis format saat git commit
+    cmds:
+      - go run github.com/evilmartians/lefthook@latest install

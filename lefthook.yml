@@ -1,0 +1,13 @@
+# Lefthook: Git Hooks Manager (Pengganti Husky di Golang)
+# Dokumentasi: https://github.com/evilmartians/lefthook
+
+pre-commit:
+  commands:
+    # 1. Otomatis format file Go yang akan di-commit
+    format:
+      glob: "*.go"
+      run: gofmt -w {staged_files} && git add {staged_files}
+
+    # 2. Pastikan test lolos sebelum commit
+    tests:
+      run: go test ./...
