@@ -59,7 +59,10 @@ func main() {
 	mux := http.NewServeMux()
 	routes.SetupRoutes(mux, productHandler, authHandler)
 
-	port := os.Getenv("APP_PORT")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = os.Getenv("APP_PORT")
+	}
 	if port == "" {
 		port = "8080"
 	}
