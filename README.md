@@ -1,45 +1,52 @@
-# Simple Product API — Golang
+# Simple Product & Auth API — Golang (Dockerized)
 
-A simple RESTful API for product management built with Go, following clean architecture principles.
+Proyek RESTful API berbasis Golang dan PostgreSQL yang diorkestrasi menggunakan Docker Compose dengan arsitektur Clean Code, multi-stage Docker build, dan volume persistensi.
 
-## Tech Stack
+> Proyek ini disusun untuk memenuhi **Tugas 1: Dockerisasi Backend dengan Docker Compose** — Study Club Backend Intermediate, KSM Veterantech UPNVJ 2026.
 
-- **Language**: Go 1.22+
-- **Database**: PostgreSQL (via Docker)
-- **Driver**: [pgx/v5](https://github.com/jackc/pgx)
+---
+
+## 🛠 Tech Stack & Tools
+
+- **Backend**: Go 1.22+ (`net/http`, Standard Go Layout)
+- **Database**: PostgreSQL 17 (via Docker Container)
+- **Database Driver**: [pgx/v5](https://github.com/jackc/pgx)
 - **Query Generator**: [sqlc](https://sqlc.dev)
-- **Auth**: [golang-jwt](https://github.com/golang-jwt/jwt) & bcrypt
-- **Hot Reload**: [air](https://github.com/air-verse/air)
+- **Authentication**: JWT (`golang-jwt/jwt/v5`) & `golang.org/x/crypto/bcrypt`
+- **Containerization**: Docker & Docker Compose (Multi-stage build)
+- **Database GUI**: JetBrains DataGrip / DBeaver / pgAdmin
 
-## Architecture
+---
 
-```
-Handler → Service → Repository → PostgreSQL
-```
+## 🏗 Arsitektur Container (Docker Compose)
 
-```
-go-api/
-├── cmd/api/main.go                 # Entry point
-├── db/
-│   ├── queries/product.sql         # SQL queries (sqlc input)
-│   └── schema/products.sql         # Table schema (sqlc input)
-├── internal/
-│   ├── db/                         # Generated code by sqlc (DO NOT EDIT)
-│   ├── handlers/product.go         # HTTP layer
-│   ├── middleware/                  # Logger, Recoverer
-│   ├── models/product.go           # Data structs
-│   ├── repository/                 # Database layer
-│   ├── routes/routes.go            # Route definitions
-│   └── services/product.go         # Business logic
-└── migrations/                     # SQL migration files
+Aplikasi dan database berjalan di dalam container terisolasi yang dihubungkan melalui satu bridge network (`app-network`):
+
+```text
+[Host Machine (Komputer Lokal)]
+  │
+  ├── Port 8080 ──────────────> [Container: simple-go-api-app (Go Backend)]
+  │                                    │
+  │                              (Bridge Network: app-network)
+  │                                    │
+  └── Port 5434 (DataGrip) ───> [Container: simple-go-api-db (PostgreSQL 17)]
+                                       │
+                                 (Named Volume: pgdata)
 ```
 
-## Getting Started
+---
 
-### Prerequisites
+## 📋 Prasyarat (Prerequisites)
 
-- [Go 1.22+](https://go.dev/dl/)
-- [Docker](https://www.docker.com/)
+Sebelum menjalankan aplikasi, pastikan komputer Anda telah terinstal:
+- [Docker Engine & Docker Compose](https://docs.docker.com/get-docker/) (Docker Desktop)
+- [Git](https://git-scm.com/)
+- *(Opsional)* [Go 1.22+](https://go.dev/dl/) jika ingin menjalankan secara lokal tanpa Docker
+- *(Opsional)* [DataGrip](https://www.jetbrains.com/datagrip/) atau Database Client lainnya
+
+---
+
+## 🚀 Panduan Setup & Menjalankan Aplikasi
 
 ### 1. Clone the repository
 
@@ -48,89 +55,128 @@ git clone https://github.com/Torikh42/simple-go-api.git
 cd simple-go-api
 ```
 
-### 2. Set up environment variables
-
+### 2. Setup Environment Variables
+Salin template konfigurasi `.env.example` menjadi `.env`:
 ```bash
 cp .env.example .env
 ```
 
-Or create a `.env` file manually:
-
-```env
-DB_HOST=localhost
-DB_PORT=5434
-DB_USER=postgres
-DB_PASSWORD=postgres
-DB_NAME=go_api_db
-APP_PORT=8080
-```
-
-### 3. Start the database
-
+### 3. Build & Jalankan Seluruh Layanan (Docker Compose)
+Jalankan perintah berikut untuk mem-build image backend dan menyalakan seluruh service:
 ```bash
-docker compose up -d
+docker compose up --build -d
 ```
+> **Catatan:**
+> - Service `postgres` akan otomatis menginisialisasi skrip SQL pada folder `./migrations` saat pertama kali container dibuat.
+> - Service `app` memiliki *healthcheck dependency*, sehingga backend hanya akan menyala setelah PostgreSQL siap menerima koneksi.
 
-This will start a PostgreSQL container named `simple-go-api` on port `5434` and automatically run the migration in `migrations/`.
-
-### 4. Run the server
-
+Periksa status container yang sedang berjalan:
 ```bash
-go run ./cmd/api
+docker compose ps
 ```
 
-Or with hot reload:
-
+Untuk melihat log aplikasi secara langsung:
 ```bash
-air
+docker compose logs -f app
 ```
 
-The server will be available at `http://localhost:8080`.
+---
 
-## API Endpoints
+## 🔌 Panduan Koneksi Database ke DataGrip
 
-| Method | Endpoint           | Description          |
-|--------|--------------------|----------------------|
-| GET    | `/health`          | Health check         |
-| POST   | `/register`        | Register user baru   |
-| POST   | `/login`           | Login & dapat JWT    |
-| GET    | `/products`        | Get all products (🔒)|
-| POST   | `/products`        | Create a product (🔒)|
-| GET    | `/products/{id}`   | Get product by ID(🔒)|
-| PUT    | `/products/{id}`   | Update a product (🔒)|
-| DELETE | `/products/{id}`   | Delete a product (🔒)|
+Untuk melihat data di database secara visual melalui DataGrip:
+1. Buka **DataGrip** $\rightarrow$ klik **+ (New)** $\rightarrow$ **Data Source** $\rightarrow$ **PostgreSQL**.
+2. Masukkan parameter koneksi:
+   - **Host**: `localhost` (atau `127.0.0.1`)
+   - **Port**: `5434` *(port yang diexpose ke host)*
+   - **User**: `postgres`
+   - **Password**: `postgres`
+   - **Database**: `go_api_db`
+3. Klik **Test Connection**. Jika diminta unduh driver, klik *Download Driver Files*.
+4. Setelah status berhasil (*Succeeded*), klik **Apply** $\rightarrow$ **OK**.
 
-### Example Request
+---
 
-**Create a product:**
+## 📡 Pengujian API Endpoints
+
+Setelah container menyala, API dapat diakses di `http://localhost:8080`.
+
+### Daftar Endpoint:
+
+| Method | Endpoint | Keterangan | Akses |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/health` | Healthcheck API | Public |
+| `POST` | `/register` | Registrasi user baru | Public |
+| `POST` | `/login` | Login user & generate JWT | Public |
+| `GET` | `/products` | Mengambil seluruh daftar produk | 🔒 Butuh JWT |
+| `POST` | `/products` | Menambah produk baru | 🔒 Butuh JWT |
+| `GET` | `/products/{id}` | Mengambil detail produk | 🔒 Butuh JWT |
+| `PUT` | `/products/{id}` | Mengubah data produk | 🔒 Butuh JWT |
+| `DELETE` | `/products/{id}` | Menghapus produk | 🔒 Butuh JWT |
+
+---
+
+### Contoh Pengujian Request:
+
+#### 1. Registrasi User
+```bash
+curl -X POST http://localhost:8080/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "torikh",
+    "email": "torikh@example.com",
+    "password": "password123"
+  }'
+```
+
+#### 2. Login untuk Mendapatkan Token
+```bash
+curl -X POST http://localhost:8080/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "torikh@example.com",
+    "password": "password123"
+  }'
+```
+*Salin token dari field `token` pada response JSON.*
+
+#### 3. Membuat Produk Baru (Write Data)
 ```bash
 curl -X POST http://localhost:8080/products \
   -H "Content-Type: application/json" \
-  -d '{"name": "Kopi Susu", "price": 25000, "stock": 100}'
+  -H "Authorization: Bearer <TOKEN_JWT_ANDA>" \
+  -d '{
+    "name": "Keyboard Mechanical",
+    "price": 750000,
+    "stock": 15
+  }'
 ```
 
-**Response:**
-```json
-{
-  "id": 1,
-  "name": "Kopi Susu",
-  "price": 25000,
-  "stock": 100
-}
-```
-
-## Development
-
-### Regenerate sqlc code
-
-After modifying `db/queries/product.sql` or `db/schema/products.sql`, run:
-
+#### 4. Membaca Produk (Read Data)
 ```bash
-sqlc generate
+curl -X GET http://localhost:8080/products \
+  -H "Authorization: Bearer <TOKEN_JWT_ANDA>"
 ```
 
-### Install sqlc CLI
+---
 
-```bash
-go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
-```
+## 💾 Pembuktian Persistensi Data (Rubrik Tugas 1)
+
+Untuk membuktikan data di database tetap tersimpan (*persistent*) meskipun container dimatikan atau dibuat ulang:
+
+1. **Tambah data produk baru** melalui endpoint `POST /products` atau cek data di DataGrip.
+2. **Hentikan dan hapus container** (tanpa menghapus named volume):
+   ```bash
+   docker compose down
+   ```
+3. **Jalankan kembali container**:
+   ```bash
+   docker compose up -d
+   ```
+4. **Cek kembali data** menggunakan endpoint `GET /products` atau *refresh* di DataGrip:
+   ```bash
+   curl -X GET http://localhost:8080/products -H "Authorization: Bearer <TOKEN_JWT_ANDA>"
+   ```
+5. **Hasil:** Data produk yang telah dibuat sebelumnya tetap ada dan tidak hilang, membuktikan volume `pgdata` berfungsi dengan baik.
+
+---

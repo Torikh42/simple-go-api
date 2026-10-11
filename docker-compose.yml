@@ -1,8 +1,7 @@
-version: "3.8"
 
 services:
   postgres:
-    container_name: simple-go-api
+    container_name: simple-go-api-db
     image: postgres:17-alpine
     restart: unless-stopped
     environment:
@@ -12,10 +11,39 @@ services:
     ports:
       - "5434:5432"
     volumes:
-      # Data tetap tersimpan meskipun container dihapus
+      # Data tetap tersimpan meskipun container dihapus (Volume Persistensi)
       - pgdata:/var/lib/postgresql/data
-      # Jalankan migration otomatis saat container pertama kali dibuat
+      # Inisialisasi otomatis tabel migrations saat container DB pertama kali dibuat
       - ./migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d go_api_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  app:
+    container_name: simple-go-api-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/go_api_db?sslmode=disable
+      - PORT=8080
+      - JWT_SECRET=RAHASIA_NEGARA
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app-network
 
 volumes:
   pgdata:
+
+networks:
+  app-network:
+    driver: bridge
