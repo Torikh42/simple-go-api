@@ -16,6 +16,39 @@ Proyek RESTful API berbasis Golang dan PostgreSQL yang diorkestrasi menggunakan 
 - **Containerization**: Docker & Docker Compose (Multi-stage build)
 - **Database GUI**: JetBrains DataGrip / DBeaver / pgAdmin
 
+## 🏛 Application Architecture & Project Structure
+
+Mengikuti prinsip *Clean Architecture* dan *Standard Go Project Layout*:
+
+```text
+Handler (HTTP) → Service (Business Logic) → Repository (Database Layer) → PostgreSQL
+```
+
+```text
+go-api/
+├── cmd/
+│   └── api/
+│       └── main.go                 # Entry point aplikasi (injeksi dependensi & router)
+├── db/
+│   ├── queries/
+│   │   ├── product.sql             # SQL queries untuk produk (input sqlc)
+│   │   └── users.sql               # SQL queries untuk users & auth (input sqlc)
+│   └── schema/
+│       ├── products.sql            # Skema DDL tabel products
+│       └── users_and_sessions.sql  # Skema DDL tabel users & sessions
+├── internal/
+│   ├── db/                         # Kode type-safe yang digenerate oleh sqlc
+│   ├── handlers/                   # Layer HTTP (Product & Auth Handler)
+│   ├── middleware/                 # Middleware (Auth JWT, Logger, Recoverer)
+│   ├── models/                     # Model data / entity
+│   ├── repository/                 # Layer akses database
+│   ├── routes/                     # Definisi rute URL & middleware binding
+│   └── services/                   # Layer logika bisnis & validasi
+├── migrations/                     # Skrip SQL untuk inisialisasi database di Docker
+├── Dockerfile                      # Multi-stage Docker build
+└── docker-compose.yml              # Orkestrasi multi-container backend & database
+```
+
 ---
 
 ## 🏗 Arsitektur Container (Docker Compose)
