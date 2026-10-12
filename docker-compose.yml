@@ -5,18 +5,18 @@ services:
     image: postgres:17-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: go_api_db
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-go_api_db}
     ports:
-      - "5434:5432"
+      - "${DB_PORT:-5434}:5432"
     volumes:
       # Data tetap tersimpan meskipun container dihapus (Volume Persistensi)
       - pgdata:/var/lib/postgresql/data
       # Inisialisasi otomatis tabel migrations saat container DB pertama kali dibuat
       - ./migrations:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d go_api_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-go_api_db}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -30,11 +30,11 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "${APP_PORT:-8080}:8080"
     environment:
-      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/go_api_db?sslmode=disable
-      - PORT=8080
-      - JWT_SECRET=RAHASIA_NEGARA
+      - DATABASE_URL=postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-go_api_db}?sslmode=disable
+      - PORT=${APP_PORT:-8080}
+      - JWT_SECRET=${JWT_SECRET:-RAHASIA_NEGARA}
     depends_on:
       postgres:
         condition: service_healthy
