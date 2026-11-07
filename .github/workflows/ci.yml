@@ -3,7 +3,7 @@ name: Go CI/CD & Gateway Quality Gate
 on:
   workflow_dispatch:
   push:
-    branches: [ main, "feat/*" ]
+    branches: [ main ]
   pull_request:
     branches: [ main ]
 
