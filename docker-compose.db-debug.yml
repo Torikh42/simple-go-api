@@ -1,0 +1,6 @@
+# Override opsional untuk membuka port PostgreSQL ke host (misal untuk koneksi DataGrip)
+# Jalankan dengan: docker compose -f docker-compose.yml -f docker-compose.db-debug.yml up -d
+services:
+  postgres:
+    ports:
+      - "${DB_PORT:-5434}:5432"
