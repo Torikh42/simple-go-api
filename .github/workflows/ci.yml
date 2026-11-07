@@ -63,6 +63,7 @@ jobs:
       - name: Validate Nginx Configuration Syntax
         run: |
           docker run --rm \
+            --add-host app:127.0.0.1 \
             -v "${{ github.workspace }}/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro" \
             nginx:1.28-alpine nginx -t
 
@@ -108,16 +109,17 @@ jobs:
 
       - name: Start Full Stack (Nginx + 3 Replicas + Postgres)
         run: |
+          cp .env.example .env
           docker compose up --build -d
           echo "Waiting for services to become healthy..."
-          sleep 12
+          sleep 10
           docker compose ps
 
       - name: Probe Gateway Root & Health
         run: |
-          curl -fail -i http://localhost:8080/health
-          curl -fail -i http://localhost:8080/api/health
-          curl -fail -i http://localhost:8080/
+          curl --retry 10 --retry-delay 2 --retry-connrefused -fail -i http://localhost:8080/health
+          curl --retry 10 --retry-delay 2 --retry-connrefused -fail -i http://localhost:8080/api/health
+          curl --retry 10 --retry-delay 2 --retry-connrefused -fail -i http://localhost:8080/
 
       - name: Verify Single Entry Point Isolation
         run: |
