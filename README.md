@@ -531,68 +531,25 @@ docker compose up -d
 
 ---
 
-### 💡 Jawaban Pertanyaan Konseptual (Slide 58-59)
+### Jawaban Tiga Pertanyaan Wajib Tugas 2 (Slide 58)
 
-#### Pertanyaan 1: Mengapa rate limiting lebih baik ditaruh di Nginx daripada di aplikasi Go? Apa kelebihan dan kekurangannya?
+> **Ketentuan Penilaian:** Ditulis dengan kata-kata sendiri, ringkas (2–4 kalimat per jawaban), berfokus pada esensi pemahaman arsitektur.
 
-**Analisis & Jawaban:**
-Menempatkan rate limiting di Nginx (lapisan terluar / Gateway) jauh lebih unggul dalam menjaga ketahanan sistem (*system resilience*), terutama saat menghadapi serangan brute force login atau lonjakan trafik abnormal (*DDoS spike*):
-
-1. **Efisiensi Sumber Daya & Arsitektur Kernel:**
-   Nginx ditulis dalam bahasa C dengan arsitektur non-blocking event-driven I/O (`epoll` di Linux). Nginx dapat mengevaluasi IP client dan menolak request ilegal (HTTP 429) langsung di socket buffer memory level dengan konsumsi CPU dan RAM yang sangat minim.
-   Sebaliknya, jika rate limiting ditaruh di aplikasi Go:
-   - Setiap request masuk harus melewati TCP handshake, dialokasikan goroutine baru (`net/http`), mem-parse header HTTP, mengalokasikan memori struct JSON, hingga mengonsumsi koneksi database pool / Redis.
-   - Di bawah serangan ribuan request per detik, runtime Go akan terbebani oleh *garbage collection* (GC pressure) dan kehabisan goroutine/memory sebelum sempat memblokir request.
-
-2. **Kelebihan Menaruh di Nginx:**
-   - **Perlindungan Terdepan (Perimeter Shield)**: Trafik berbahaya dipotong sebelum menyentuh aplikasi backend.
-   - **Zero Impact on Backend Performance**: Backend Go hanya memproses request yang valid dan legal.
-   - **Agnostik Bahasa & Terpusat**: Satu konfigurasi rate limit di Nginx melindungi seluruh microservice di belakangnya tanpa perlu menulis ulang middleware di setiap bahasa/service.
-
-3. **Kekurangan Menaruh di Nginx:**
-   - **Kurang Konteks Bisnis Aplikasi**: Nginx umumnya membatasi berdasarkan IP address (`$binary_remote_addr`). Nginx tidak mengetahui data domain bisnis di database (misalnya: apakah user ini tier *Free*, *VIP*, atau apakah sisa kuota API-nya masih ada).
-   - **Tantangan NAT / Public Proxy**: Banyak user di kantor atau kampus yang berbagi satu IP publik yang sama. Jika satu user melakukan spam, rate limit berbasis IP di Nginx dapat secara keliru memblokir user lain di jaringan yang sama.
-
-> **Rekomendasi Arsitektur Produksi**: Gunakan strategi *Defense in Depth* dua lapis: Nginx menangani **IP-based Rate Limiting** untuk memfilter flood/brute force kasar di pintu gerbang, sementara aplikasi backend menangani **User/Token-based Rate Limiting** (menggunakan Redis) berdasarkan identitas akun pengguna dan paket langganan.
+#### 01. Kenapa upstream kalian perlu `zone`? Apa yang terjadi kalau dihapus?
+**Jawaban:**  
+direktif zone dipake untuk shared memory supaya semua worker process nginx berbagi informasi yang sama tentang daftar replika backendnya. kalo zone dihapus, tiap workers si Nginx bakal jalan sendiri-sendiri, hasilnya pembagian beban request bisa jdi ga merata. selain itu, nginx jadi tidak bisa update IP replika baru secara dinamis lewat DNS Docker, dan worker bisa salah kirim request ke kontainer yang sudah mati
 
 ---
 
-#### Pertanyaan 2: Dalam arsitektur satu pintu ini, apa yang terjadi jika container Nginx mati? Bagaimana solusinya di level production?
-
-**Analisis & Jawaban:**
-1. **Dampak Jika Nginx Mati:**
-   Nginx menjadi **Single Point of Failure (SPOF)**. Meskipun kita memiliki 3 replika Go backend yang sehat dan database PostgreSQL yang aktif, seluruh sistem akan lumpuh total dari perspektif pengguna luar. Tidak ada satu pun request yang dapat masuk ke dalam private network, menghasilkan error `Connection Refused` atau `503 Service Unavailable` di sisi client.
-
-2. **Solusi di Level Production:**
-   Di lingkungan industri/enterprise, gateway tidak pernah dijalankan sebagai single instance tunggal tanpa redundansi:
-   - **Virtual IP (VIP) & VRRP (Keepalived)**: Menjalankan minimal 2 instance Nginx (Active-Passive atau Active-Active) pada server fisik/VM berbeda. Protokol VRRP (*Virtual Router Redundancy Protocol*) berbagi satu Virtual IP address. Jika node Nginx Master mengalami crash, node Backup akan mengambil alih IP virtual dalam hitungan milidetik (*heartbeat failover*).
-   - **Cloud Managed Load Balancer**: Menempatkan Load Balancer bawaan penyedia cloud di depan Nginx, seperti **AWS Application Load Balancer (ALB)**, **Google Cloud Load Balancing (GCLB)**, atau **Cloudflare**. Cloud provider menjamin availability 99.99% dengan mendistribusikan trafik ke beberapa instance Nginx di beberapa *Availability Zone* (multi-AZ).
-   - **Kubernetes Ingress Controller & HPA**: Menjalankan Nginx sebagai **Ingress Controller** di dalam cluster Kubernetes. Nginx dideploy sebagai *Deployment* dengan minimal 2-3 pod replika di node berbeda, dipasangkan dengan *Horizontal Pod Autoscaler* (HPA) yang otomatis menambah instance pod jika load meningkat, serta *liveness probe* yang me-restart pod jika Nginx hang.
+#### 02. Kenapa `limit_req_status` diganti ke 429? Apa bedanya dengan bawaan nginx?
+**Jawaban:**  
+karena klo bawaan asli si nginx itu statunya 503 service unavailable yang artinya server lagi down/rusak, makanya kita ubah ke 429 too many requests karena 429 memang standar buat status REST API untuk memberitahu bahwa user tsb mengirim terlalu banyak requests dalam 1 waktu 
 
 ---
 
-#### Pertanyaan 3: Apa perbedaan antara Layer 4 (TCP) dan Layer 7 (HTTP) load balancing di Nginx? Kapan kita harus memilih salah satunya?
-
-**Analisis & Jawaban:**
-
-| Aspek Komparasi | Layer 4 Load Balancing (Transport / TCP/UDP) | Layer 7 Load Balancing (Application / HTTP/HTTPS) |
-| :--- | :--- | :--- |
-| **Model OSI** | Layer 4 (Transport) via modul `stream` Nginx | Layer 7 (Application) via modul `http` Nginx |
-| **Pemahaman Data** | Tidak membaca isi data (hanya membaca IP sumber, IP tujuan, dan Port) | Mengurai (*parse*) seluruh protokol HTTP (URI path, method, headers, cookies, body) |
-| **Kemampuan Routing** | Terbatas pada routing IP dan Port | Cerdas: path-based (`/api`, `/auth`, `/static`), host header routing, header inspection |
-| **Fitur Lanjutan** | Tidak bisa SSL termination per URL, tidak bisa caching HTTP, tidak bisa gzip | Mendukung SSL/TLS termination, HTTP caching, compression (gzip/brotli), rate limit per endpoint |
-| **Performa & Latensi** | Ekstrem cepat & hemat CPU (paket diteruskan langsung via socket stream) | Sedikit lebih lambat karena harus mem-parse seluruh frame/header HTTP |
-
-**Kapan Harus Memilih Salah Satunya?**
-- **Pilih Layer 4 (TCP/UDP) ketika:**
-  1. Melakukan load balancing untuk database cluster (misalnya pool PostgreSQL Patroni, MySQL Galera, atau Redis Cluster).
-  2. Protokol non-HTTP, seperti streaming video mentah (RTMP/RTSP), DNS server (UDP), server game online (UDP latency rendah), atau koneksi IoT (MQTT).
-  3. Membutuhkan throughput raw throughput masif di mana header HTTP tidak relevan untuk diinspeksi.
-- **Pilih Layer 7 (HTTP) ketika:**
-  1. Membangun **API Gateway** untuk web & mobile app (seperti yang diimplementasikan pada Tugas 2 ini).
-  2. Memerlukan **Path-based routing** (misalnya memisahkan routing `/products` ke Service Produk dan `/login` ke Service Auth).
-  3. Memerlukan **SSL Termination** terpusat, injeksi security headers, HTTP In-Memory Caching, dan kompresi Gzip sebelum data dikirim ke client.
-  4. Memerlukan proteksi endpoint spesifik, seperti rate limiting pada `POST /login` untuk mitigasi brute force credential stuffing.
+#### 03. Kenapa backend dan database gak punya `ports`? Lalu nginx menjangkau backend lewat apa?
+**Jawaban:**  
+karena demi security jadi sistem kita cuma punya 1 entry point & tidak ada user yang bisa bypass si nginx nya. nginx bisa menjangkau backend kita karena mereka semua berada sama sama dalam satu network docker yang sama, si nginx cukup memanggil nama servicenya langsung dan DNS internal docker otomatis mengarahkannya ke kontainer backend kita  
 
 ---
 
