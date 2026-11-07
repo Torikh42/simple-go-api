@@ -595,3 +595,62 @@ Menempatkan rate limiting di Nginx (lapisan terluar / Gateway) jauh lebih unggul
   4. Memerlukan proteksi endpoint spesifik, seperti rate limiting pada `POST /login` untuk mitigasi brute force credential stuffing.
 
 ---
+
+## Otomasi CI/CD & Pipeline Quality Gate
+
+Untuk menjamin keandalan kode aplikasi maupun infrastruktur gateway pada setiap *Pull Request* dan *Push* ke branch `main`, repositori ini dilengkapi dengan pipeline otomatis GitHub Actions pada [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
+
+### Alur Kerja Pipeline (CI/CD Architecture)
+
+```mermaid
+flowchart TD
+    Trigger["Push / Pull Request / Manual Trigger (workflow_dispatch)"] --> Concurrency["Concurrency Control<br/>(Auto-cancel redundant builds)"]
+    
+    subgraph ParallelGates ["Tahap 1: Verifikasi Paralel (Quality Gates)"]
+        direction LR
+        Job1["Job 1: Backend Lint & Unit Test<br/>• gofmt format check<br/>• golangci-lint analysis<br/>• go test -v -race (Race Detector)<br/>• go build sanity check"]
+        Job2["Job 2: Infra & Gateway Validation<br/>• nginx -t inside container<br/>• Base docker-compose.yml check<br/>• Debug override compose check"]
+    end
+    
+    Concurrency --> Job1
+    Concurrency --> Job2
+    
+    Job1 --> Job3["Job 3: Docker Image Build<br/>• Multi-stage buildx<br/>• GitHub Actions Cache (type=gha)"]
+    Job2 --> Job3
+    
+    Job3 --> Job4["Job 4: Stack Smoke Test (E2E Integration)<br/>• docker compose up -d (Full Stack)<br/>• Healthcheck probe: /health & /api/health<br/>• Single entry isolation probe (Port 5434)<br/>• Clean teardown (docker compose down -v)"]
+    
+    classDef trigger fill:#e0f2fe,stroke:#0284c7,stroke-width:2px,color:#0369a1;
+    classDef gate fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#92400e;
+    classDef build fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#15803d;
+    classDef e2e fill:#ede9fe,stroke:#7c3aed,stroke-width:2px,color:#5b21b6;
+    
+    class Trigger,Concurrency trigger;
+    class Job1,Job2 gate;
+    class Job3 build;
+    class Job4 e2e;
+```
+
+---
+
+### Rincian 4 Tahapan Job CI/CD
+
+#### 1. Backend Lint & Unit Test (`test-and-lint`)
+- **Format Verification**: Memeriksa kerapian kode Go menggunakan `gofmt -s -l .`.
+- **Static Code Analysis**: Menjalankan `golangci-lint` versi terbaru untuk mendeteksi *deadcode*, *errcheck*, dan *ineffassign*.
+- **Concurreny & Race Detection**: Menjalankan seluruh test suite dengan flag race condition `go test -v -race ./...`.
+- **Binary Compile**: Memastikan source code dapat dikompilasi menjadi binary tanpa error.
+
+#### 2. Infra & Gateway Validation (`infra-validation`)
+- **Nginx Syntax Pre-flight**: Menjalankan `nginx:1.28-alpine nginx -t` secara terisolasi terhadap file `nginx/default.conf`. Ini menutup celah *blind spot* sehingga typo sintaks Nginx langsung terdeteksi sebelum masuk tahap build.
+- **Compose Linting**: Menjalankan `docker compose config --quiet` untuk kedua file (`docker-compose.yml` dan `docker-compose.db-debug.yml`) guna memastikan interpolasi environment variable dan struktur service valid.
+
+#### 3. Docker Image Build (`docker-build`)
+- **Docker Buildx & Multi-stage Caching**: Membangun image container Go API menggunakan layer cache GitHub Actions (`cache-from: type=gha`, `cache-to: type=gha,mode=max`). Mengurangi durasi build dari menit menjadi hitungan detik.
+
+#### 4. Stack Smoke Test & E2E Integration (`stack-smoke-test`)
+- **Automated Spin-up**: Menjalankan seluruh multi-container stack (`Nginx Gateway + 3 Replicas Backend + PostgreSQL`) di runner Ubuntu.
+- **Probe HTTP Gateway**: Menembak endpoint root `/`, `/health`, dan dual route `/api/health` melalui Nginx untuk memastikan rantai koneksi reverse proxy berfungsi normal.
+- **Host Isolation Audit**: Memvalidasi bahwa koneksi langsung ke port PostgreSQL `:5434` ditolak (`Connection Refused`), membuktikan prinsip *Satu Pintu* tidak bocor.
+- **Graceful Teardown**: Membersihkan seluruh volume dan container pengujian (`docker compose down -v`).
+
